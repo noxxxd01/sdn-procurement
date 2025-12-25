@@ -34,6 +34,7 @@ import {
   Trash2,
   Upload,
 } from "lucide-react";
+import Link from "next/link";
 import React from "react";
 
 const ppmpData = [
@@ -127,9 +128,11 @@ export default function PPMP() {
             <Button variant="outline" className="shadow-none">
               <Upload className="w-2 h-2" /> Upload PPMP
             </Button>
-            <Button>
-              <Plus className="w-2 h-2" /> Create PPMP
-            </Button>
+            <Link href="/ppmp/create-ppmp">
+              <Button>
+                <Plus className="w-2 h-2" /> Create PPMP
+              </Button>
+            </Link>
           </div>
         </div>
         <div className="pt-4">
