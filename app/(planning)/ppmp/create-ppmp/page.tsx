@@ -24,7 +24,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { Check, CheckIcon, Plus, PlusCircle, X } from "lucide-react";
+import { CheckIcon, Plus, PlusCircle, X } from "lucide-react";
 import React from "react";
 
 export default function page() {

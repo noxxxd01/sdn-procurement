@@ -75,7 +75,7 @@ const data = {
       items: [
         {
           title: "Purchase Requests",
-          url: "#",
+          url: "/purchase-request",
         },
         {
           title: "RFQ",
@@ -160,7 +160,11 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
     isActive:
       (item.title === "Dashboard" && pathname === "/dashboard") ||
       (item.title === "Planning" && pathname.includes("market-scoping")) ||
-      (item.title === "Planning" && pathname.includes("ppmp")),
+      (item.title === "Planning" && pathname.includes("ppmp")) ||
+      (item.title === "Planning" && pathname.includes("app")) ||
+      (item.title === "Procurement" && pathname.includes("purchase-request")) ||
+      (item.title === "Procurement" && pathname.includes("rfq")) ||
+      (item.title === "Procurement" && pathname.includes("apq")),
   }));
 
   return (

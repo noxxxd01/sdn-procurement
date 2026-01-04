@@ -1,4 +1,4 @@
-import { AppSidebar } from "@/components/app-sidebar"
+import { AppSidebar } from "@/components/app-sidebar";
 import {
   Breadcrumb,
   BreadcrumbItem,
@@ -6,13 +6,55 @@ import {
   BreadcrumbList,
   BreadcrumbPage,
   BreadcrumbSeparator,
-} from "@/components/ui/breadcrumb"
-import { Separator } from "@/components/ui/separator"
+} from "@/components/ui/breadcrumb";
+import {
+  Card,
+  CardAction,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { Progress } from "@/components/ui/progress";
+import { Separator } from "@/components/ui/separator";
 import {
   SidebarInset,
   SidebarProvider,
   SidebarTrigger,
-} from "@/components/ui/sidebar"
+} from "@/components/ui/sidebar";
+import { HatGlasses, ShieldCheck, Laptop, Building2 } from "lucide-react";
+import Link from "next/link";
+
+const budgetCards = [
+  {
+    title: "Cybersecurity",
+    slug: "cybersecurity",
+    amount: 100000,
+    progress: 70,
+    icon: HatGlasses,
+  },
+  {
+    title: "IT Modernization",
+    slug: "it-modernization",
+    amount: 350000,
+    progress: 45,
+    icon: Laptop,
+  },
+  {
+    title: "Office Infrastructure",
+    slug: "office-infrastructure",
+    amount: 500000,
+    progress: 60,
+    icon: Building2,
+  },
+  {
+    title: "Data Protection",
+    slug: "data-protection",
+    amount: 200000,
+    progress: 85,
+    icon: ShieldCheck,
+  },
+];
 
 export default function Page() {
   return (
@@ -41,15 +83,39 @@ export default function Page() {
             </Breadcrumb>
           </div>
         </header>
-        <div className="flex flex-1 flex-col gap-4 p-4 pt-0">
-          <div className="grid auto-rows-min gap-4 md:grid-cols-3">
-            <div className="bg-muted/50 aspect-video rounded-xl" />
-            <div className="bg-muted/50 aspect-video rounded-xl" />
-            <div className="bg-muted/50 aspect-video rounded-xl" />
-          </div>
-          <div className="bg-muted/50 min-h-[100vh] flex-1 rounded-xl md:min-h-min" />
-        </div>
+        <main className="grid grid-cols-4 gap-4 p-4">
+          {budgetCards.map((card) => {
+            const Icon = card.icon;
+            return (
+              <Link
+                key={card.slug}
+                href={`dashboard/projects/${card.slug}`}
+                className="block"
+              >
+                <Card className="shadow-none gap-0 hover:border-neutral-300 cursor-pointer transition">
+                  <CardHeader>
+                    <CardDescription>{card.title}</CardDescription>
+
+                    <CardTitle className="text-2xl mt-4 font-bold">
+                      PHP {card.amount.toLocaleString()}
+                    </CardTitle>
+
+                    <CardAction>
+                      <div className="rounded-full">
+                        <Icon className="w-4 h-4" />
+                      </div>
+                    </CardAction>
+                  </CardHeader>
+
+                  <CardContent>
+                    <Progress value={card.progress} className="mt-4 w-full" />
+                  </CardContent>
+                </Card>
+              </Link>
+            );
+          })}
+        </main>
       </SidebarInset>
     </SidebarProvider>
-  )
+  );
 }
