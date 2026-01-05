@@ -18,6 +18,7 @@ import { Input } from "./ui/input";
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
+import { Trash2 } from "lucide-react";
 
 type DeleteProjectButtonProps = {
   slug: string;
@@ -45,8 +46,8 @@ export function DeleteProjectButton({ slug }: DeleteProjectButtonProps) {
   return (
     <Dialog>
       <DialogTrigger asChild>
-        <Button variant="destructive">
-          {mutation.isPending ? "Deleting..." : "Delete Project"}
+        <Button variant="outline" className="shadow-none">
+          <Trash2 className="w-2 h-2 text-red-500" />
         </Button>
       </DialogTrigger>
 

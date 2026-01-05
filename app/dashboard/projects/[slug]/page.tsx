@@ -1,14 +1,11 @@
 import AddFundButton from "@/components/add-fund-btn";
 import { DashboardLayout } from "@/components/dashboard-layout";
-import { Button } from "@/components/ui/button";
 import { CardTitle } from "@/components/ui/card";
-
-import { BoxIcon, Ellipsis } from "lucide-react";
 import { Separator } from "@/components/ui/separator";
-import { Table, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import FundsGrid from "@/components/FundsGrid";
 import CreateProcurementDialog from "@/components/CreateProcurementDialog";
 import ProcurementTable from "@/components/ProcurementTable";
+import { DeleteProjectButton } from "@/components/delete-project-btn";
 
 type PageProps = {
   params: Promise<{
@@ -33,9 +30,7 @@ export default async function ProjectDetails({ params }: PageProps) {
     <DashboardLayout breadcrumbs={breadcrumbs}>
       <main>
         <div className="flex flex-row justify-end gap-2">
-          <Button variant="outline" className="shadow-none">
-            <Ellipsis className="w-2 h-2" />
-          </Button>
+          <DeleteProjectButton slug={slug} />
           <AddFundButton slug={slug} />
         </div>
         <FundsGrid slug={slug} />

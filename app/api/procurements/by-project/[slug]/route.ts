@@ -1,15 +1,15 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
+import { RowDataPacket } from "mysql2";
 
 type RouteContext = {
-  params: Promise<{
-    slug: string;
-  }>;
+  params: Promise<{ slug: string }>;
 };
 
 export async function GET(req: Request, { params }: RouteContext) {
   try {
-    const { slug } = await params; // ✅ THIS IS THE FIX
+    const { slug } = await params;
 
     if (!slug) {
       return NextResponse.json(
@@ -18,28 +18,56 @@ export async function GET(req: Request, { params }: RouteContext) {
       );
     }
 
-    const projectName = slug.replace(/-/g, " ");
-
-    const [rows] = await db.query(
-      `
-      SELECT
-        id,
-        procurement_id,
-        project,
-        sub_project,
-        year,
-        total_budget,
-        total_budget AS remaining_balance,
-        status,
-        created_at
-      FROM tbl_procurements
-      WHERE LOWER(project) = LOWER(?)
-      ORDER BY created_at DESC
-      `,
-      [projectName]
+    // 1️⃣ Get project by slug
+    const [projects] = await db.query<RowDataPacket[]>(
+      "SELECT id, name FROM tbl_projects WHERE LOWER(slug) = LOWER(?)",
+      [slug]
     );
 
-    return NextResponse.json(rows);
+    if (!projects.length) {
+      return NextResponse.json(
+        { message: "Project not found" },
+        { status: 404 }
+      );
+    }
+
+    const project = projects[0];
+
+    // 2️⃣ Get sub-projects for this project
+    const [subProjectsRows] = await db.query<RowDataPacket[]>(
+      "SELECT id, name FROM tbl_sub_projects WHERE project_id = ? ORDER BY name ASC",
+      [project.id]
+    );
+
+    const subProjects = subProjectsRows.map((sp) => sp.name);
+
+    // 3️⃣ Get all procurements for this project
+    const [procurements] = await db.query<RowDataPacket[]>(
+      `
+      SELECT 
+        p.id,
+        p.procurement_id,
+        prj.name AS project,
+        s.name AS sub_project,
+        p.year,
+        p.total_budget,
+        p.remaining_balance,
+        p.status,
+        p.created_at
+      FROM tbl_procurements p
+      JOIN tbl_projects prj ON p.project_id = prj.id
+      LEFT JOIN tbl_sub_projects s ON p.sub_project_id = s.id
+      WHERE prj.id = ?
+      ORDER BY p.created_at DESC
+      `,
+      [project.id]
+    );
+
+    return NextResponse.json({
+      project: project.name,
+      subProjects,
+      rows: procurements,
+    });
   } catch (error) {
     console.error(error);
     return NextResponse.json({ message: "Server error" }, { status: 500 });

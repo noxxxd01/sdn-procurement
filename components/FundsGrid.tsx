@@ -33,6 +33,7 @@ import {
 import { DropdownMenuGroup } from "@radix-ui/react-dropdown-menu";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
+import { Skeleton } from "./ui/skeleton";
 
 type FundsGridProps = {
   slug: string;
@@ -83,8 +84,20 @@ export default function FundsGrid({ slug }: FundsGridProps) {
     }
   };
 
-  if (isLoading) return <p>Loading funds...</p>;
-  if (error) return <p>Failed to load funds</p>;
+  if (isLoading)
+    return (
+      <div className="grid grid-cols-4 gap-4 mt-4">
+        {Array.from({ length: 4 }).map((_, index) => (
+          <Skeleton key={index} className="w-full h-32" />
+        ))}
+      </div>
+    );
+  if (error)
+    return (
+      <div className="text-center">
+        <Button variant="link">Failed to load funds</Button>
+      </div>
+    );
 
   if (projectFunds.length === 0)
     return (

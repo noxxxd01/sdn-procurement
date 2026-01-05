@@ -7,17 +7,19 @@ export async function GET() {
   try {
     const [rows] = await db.query(`
       SELECT 
-        id,
-        procurement_id,
-        project,
-        sub_project,
-        year,
-        total_budget,
-        remaining_balance
-        status,
-        created_at
-      FROM tbl_procurements
-      ORDER BY created_at DESC
+        p.id,
+        p.procurement_id,
+        pr.name AS project,
+        sp.name AS sub_project,
+        p.year,
+        p.total_budget,
+        p.remaining_balance,
+        p.status,
+        p.created_at
+      FROM tbl_procurements p
+      JOIN tbl_projects pr ON p.project_id = pr.id
+      LEFT JOIN tbl_sub_projects sp ON p.sub_project_id = sp.id
+      ORDER BY p.created_at DESC
     `);
 
     return NextResponse.json(rows);
@@ -36,14 +38,14 @@ export async function POST(req: Request) {
     const body = await req.json();
     const {
       procurementId,
-      project,
-      subProject,
+      projectId, // now expects ID
+      subProjectId, // optional
       year,
       totalBudget,
       status = "Pending",
     } = body;
 
-    if (!procurementId || !project || !subProject || !year || !totalBudget) {
+    if (!procurementId || !projectId || !year || !totalBudget) {
       return NextResponse.json(
         { message: "Missing required fields" },
         { status: 400 }
@@ -53,10 +55,17 @@ export async function POST(req: Request) {
     await db.query(
       `
       INSERT INTO tbl_procurements
-        (procurement_id, project, sub_project, year, total_budget, status)
+        (procurement_id, project_id, sub_project_id, year, total_budget, status)
       VALUES (?, ?, ?, ?, ?, ?)
       `,
-      [procurementId, project, subProject, year, totalBudget, status]
+      [
+        procurementId,
+        projectId,
+        subProjectId || null,
+        year,
+        totalBudget,
+        status,
+      ]
     );
 
     return NextResponse.json(

@@ -2,21 +2,24 @@ import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
 
 export async function DELETE(
-  _req: Request,
-  { params }: { params: { id: string } }
+  req: Request,
+  context: { params: Promise<{ id: string }> }
 ) {
   try {
-    const id = Number(params.id);
+    const { id } = await context.params; // ✅ unwrap params
+    const procurementId = Number(id);
 
-    if (!id) {
+    if (!procurementId) {
       return NextResponse.json({ message: "Invalid ID" }, { status: 400 });
     }
 
-    await db.query(`DELETE FROM tbl_procurements WHERE id = ?`, [id]);
+    await db.query("DELETE FROM tbl_procurements WHERE id = ?", [
+      procurementId,
+    ]);
 
-    return NextResponse.json({ message: "Procurement deleted" });
+    return NextResponse.json({ success: true });
   } catch (error) {
-    console.error(error);
+    console.error("Delete failed:", error);
     return NextResponse.json(
       { message: "Failed to delete procurement" },
       { status: 500 }

@@ -12,7 +12,6 @@ import {
   DialogDescription,
   DialogFooter,
 } from "@/components/ui/dialog";
-import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { BoxIcon } from "lucide-react";
 import { Separator } from "./ui/separator";
@@ -24,12 +23,23 @@ import {
   InputGroupText,
 } from "./ui/input-group";
 import { toast } from "sonner";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { createProcurement } from "@/lib/procurements";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import {
+  createProcurement,
+  getProjects,
+  getSubProjects,
+} from "@/lib/procurements";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "./ui/select";
 
 type FormValues = {
-  project: string;
-  subProject: string;
+  projectId: number;
+  subProjectId?: number;
   year: number;
   totalBudget: number;
 };
@@ -37,6 +47,9 @@ type FormValues = {
 export default function CreateProcurementDialog() {
   const [open, setOpen] = React.useState(false);
   const [generatedId, setGeneratedId] = React.useState<string>("PR-----");
+  const [selectedProjectId, setSelectedProjectId] = React.useState<number>();
+  const [selectedSubProjectId, setSelectedSubProjectId] =
+    React.useState<number>();
 
   const queryClient = useQueryClient();
 
@@ -49,37 +62,56 @@ export default function CreateProcurementDialog() {
     formState: { errors, isSubmitting },
   } = useForm<FormValues>({
     defaultValues: {
-      project: "",
-      subProject: "",
+      projectId: 0,
+      subProjectId: undefined,
       year: new Date().getFullYear(),
       totalBudget: 0,
     },
   });
 
+  // Fetch all projects
+  const { data: projects = [], isLoading: projectsLoading } = useQuery({
+    queryKey: ["projects"],
+    queryFn: getProjects,
+  });
+
+  // Fetch sub-projects for the selected project
+  const { data: subProjects = [], isLoading: subProjectsLoading } = useQuery({
+    queryKey: ["subProjects", selectedProjectId],
+    queryFn: () =>
+      selectedProjectId
+        ? getSubProjects(selectedProjectId)
+        : Promise.resolve([]),
+    enabled: !!selectedProjectId,
+  });
+
+  // Watch form values to generate procurement ID
   React.useEffect(() => {
     const subscription = watch((values) => {
-      const { project, subProject, year } = values;
+      const { projectId, subProjectId, year } = values;
 
-      if (!project && !subProject && !year) {
+      if (!projectId || !year) {
         setGeneratedId("PR-----");
         return;
       }
 
-      const projectCode = project
-        ? project
-            .split(" ")
-            .map((w) => w[0])
-            .join("")
-            .toUpperCase()
-        : "-";
-      const subProjectCode = subProject
-        ? subProject
-            .split(" ")
-            .map((w) => w[0])
-            .join("")
-            .toUpperCase()
-        : "-";
-      const yearCode = year ? year.toString() : "----";
+      const projectName = projects.find((p) => p.id === projectId)?.name || "-";
+      const subProjectName =
+        subProjects.find((sp) => sp.id === subProjectId)?.name || "-";
+
+      const projectCode = projectName
+        .split(" ")
+        .map((w) => w[0])
+        .join("")
+        .toUpperCase();
+
+      const subProjectCode = subProjectName
+        .split(" ")
+        .map((w) => w[0])
+        .join("")
+        .toUpperCase();
+
+      const yearCode = year.toString();
       const randomNumber = String(Math.floor(Math.random() * 900 + 100));
 
       setGeneratedId(
@@ -87,19 +119,10 @@ export default function CreateProcurementDialog() {
       );
     });
 
-    return () => subscription.unsubscribe(); // clean up
-  }, []);
+    return () => subscription.unsubscribe();
+  }, [watch, projects, subProjects]);
 
-  const onSubmit = (data: FormValues) => {
-    createMutation.mutate({
-      procurementId: generatedId,
-      project: data.project,
-      subProject: data.subProject,
-      year: data.year,
-      totalBudget: data.totalBudget,
-    });
-  };
-
+  // Mutation to create procurement
   const createMutation = useMutation({
     mutationFn: createProcurement,
     onSuccess: () => {
@@ -107,9 +130,23 @@ export default function CreateProcurementDialog() {
       toast.success("Procurement created");
       setOpen(false);
       reset();
+      setSelectedProjectId(undefined);
+      setSelectedSubProjectId(undefined);
     },
     onError: (err: any) => toast.error(err.message),
   });
+
+  const onSubmit = (data: FormValues) => {
+    if (!data.projectId) return toast.error("Please select a project");
+
+    createMutation.mutate({
+      procurementId: generatedId,
+      projectId: data.projectId,
+      subProjectId: data.subProjectId || null,
+      year: data.year,
+      totalBudget: data.totalBudget,
+    });
+  };
 
   return (
     <>
@@ -131,39 +168,89 @@ export default function CreateProcurementDialog() {
           </DialogHeader>
 
           <form className="grid gap-4 py-4" onSubmit={handleSubmit(onSubmit)}>
+            {/* Project & Sub-project */}
             <div className="grid grid-cols-2 gap-2">
+              {/* Project */}
               <div className="space-y-2">
                 <Label htmlFor="project">Project</Label>
-                <Input
-                  id="project"
-                  placeholder="Enter Project Name"
-                  className="shadow-none"
-                  {...register("project", { required: "Project is required" })}
+                <Controller
+                  name="projectId"
+                  control={control}
+                  rules={{ required: "Project is required" }}
+                  render={({ field }) => (
+                    <Controller
+                      name="projectId"
+                      control={control}
+                      render={({ field }) => (
+                        <Select
+                          {...field}
+                          onValueChange={(val) => {
+                            const id = Number(val);
+                            field.onChange(id);
+                            setSelectedProjectId(id); // triggers sub-project fetch
+                          }}
+                          value={field.value?.toString() || ""}
+                        >
+                          <SelectTrigger className="shadow-none w-full">
+                            <SelectValue placeholder="Select Project" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {projects.map((p) => (
+                              <SelectItem key={p.id} value={p.id.toString()}>
+                                {p.name}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      )}
+                    />
+                  )}
                 />
-                {errors.project && (
+                {errors.projectId && (
                   <p className="text-red-500 text-xs mt-1">
-                    {errors.project.message}
+                    {errors.projectId.message}
                   </p>
                 )}
               </div>
+
+              {/* Sub-project */}
               <div className="space-y-2">
                 <Label htmlFor="subProject">Sub-project</Label>
-                <Input
-                  id="subProject"
-                  placeholder="Enter Sub-project Name"
-                  className="shadow-none"
-                  {...register("subProject", {
-                    required: "Sub-project is required",
-                  })}
+                <Controller
+                  name="subProjectId"
+                  control={control}
+                  render={({ field }) => (
+                    <Controller
+                      name="subProjectId"
+                      control={control}
+                      render={({ field }) => (
+                        <Select
+                          {...field}
+                          onValueChange={(val) => field.onChange(Number(val))}
+                          value={field.value?.toString() || ""}
+                          disabled={
+                            subProjectsLoading || subProjects.length === 0
+                          }
+                        >
+                          <SelectTrigger className="shadow-none w-full">
+                            <SelectValue placeholder="Select Sub-project" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {subProjects.map((sp) => (
+                              <SelectItem key={sp.id} value={sp.id.toString()}>
+                                {sp.name}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      )}
+                    />
+                  )}
                 />
-                {errors.subProject && (
-                  <p className="text-red-500 text-xs mt-1">
-                    {errors.subProject.message}
-                  </p>
-                )}
               </div>
             </div>
 
+            {/* Year */}
             <div className="grid grid-cols-1 gap-2">
               <Label htmlFor="year">Year</Label>
               <Controller
@@ -191,6 +278,7 @@ export default function CreateProcurementDialog() {
               )}
             </div>
 
+            {/* Total Budget */}
             <div className="grid grid-cols-1 gap-2">
               <Label htmlFor="totalBudget">Total Budget</Label>
               <Controller
@@ -218,6 +306,7 @@ export default function CreateProcurementDialog() {
 
             <Separator />
 
+            {/* Procurement ID preview */}
             <div className="p-4 bg-green-100 rounded-md">
               <CardDescription>Procurement ID:</CardDescription>
               <div className="text-center mt-4">
