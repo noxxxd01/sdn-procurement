@@ -46,7 +46,8 @@ type FormValues = {
 
 export default function CreateProcurementDialog() {
   const [open, setOpen] = React.useState(false);
-  const [generatedId, setGeneratedId] = React.useState<string>("PR-----");
+  const [generatedId, setGeneratedId] =
+    React.useState<string>("PR ---- ---- ----");
   const [selectedProjectId, setSelectedProjectId] = React.useState<number>();
   const [selectedSubProjectId, setSelectedSubProjectId] =
     React.useState<number>();

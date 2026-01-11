@@ -3,6 +3,7 @@
 import { DashboardLayout } from "@/components/dashboard-layout";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { Calendar } from "@/components/ui/calendar";
 import {
   Card,
   CardAction,
@@ -12,17 +13,37 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
+import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuGroup,
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { Input } from "@/components/ui/input";
 import {
   InputGroup,
   InputGroupAddon,
   InputGroupInput,
 } from "@/components/ui/input-group";
+import { Label } from "@/components/ui/label";
+import {
+  Select,
+  SelectContent,
+  SelectGroup,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Separator } from "@/components/ui/separator";
 import {
   Table,
   TableBody,
@@ -42,7 +63,6 @@ import {
   Ellipsis,
   Eye,
   Filter,
-  LayoutDashboard,
   Pencil,
   Plus,
   Search,
@@ -51,55 +71,34 @@ import {
   Upload,
 } from "lucide-react";
 import Link from "next/link";
+import { useQuery } from "@tanstack/react-query";
+import { fetchMarketScopings } from "@/lib/market-scoping";
 
-const marketScopingData = [
-  {
-    id: "MS-2024-001",
-    projectName: "IT Infrastructure Upgrade",
-    budget: "₱2,500,000",
-    procuringEntity: "Department of Information Technology",
-    endUser: "Finance Division",
-    status: "Completed",
-    statusColor: "text-green-600",
-    bgStatusColor: "bg-green-100",
-  },
-  {
-    id: "MS-2024-002",
-    projectName: "Office Equipment Procurement",
-    budget: "₱850,000",
-    procuringEntity: "Bureau of Internal Revenue",
-    endUser: "Administrative Services",
-    status: "In Progress",
-    statusColor: "text-blue-600",
-  },
-  {
-    id: "MS-2024-003",
-    projectName: "Construction & Renovation",
-    budget: "₱5,200,000",
-    procuringEntity: "Department of Public Works",
-    endUser: "Engineering Division",
-    status: "Pending Review",
-    statusColor: "text-yellow-600",
-  },
-  {
-    id: "MS-2024-004",
-    projectName: "Vehicle Fleet Acquisition",
-    budget: "₱3,750,000",
-    procuringEntity: "Bureau of Land Transportation",
-    endUser: "Operations Department",
-    status: "Draft",
-    statusColor: "text-gray-600",
-  },
-  {
-    id: "MS-2024-005",
-    projectName: "Training & Development Program",
-    budget: "₱450,000",
-    procuringEntity: "Civil Service Commission",
-    endUser: "Human Resources",
-    status: "Completed",
-    statusColor: "text-green-600",
-  },
-];
+type MarketScoping = {
+  id: number;
+
+  market_scoping_id: string;
+  procurement_id: string;
+
+  status: string;
+
+  procuring_entity: string;
+  end_user: string;
+
+  rep_name: string;
+  rep_designation: string;
+
+  project_name: string;
+  estimated_budget: number;
+
+  market_scoping_from: string; // ISO date string
+  market_scoping_to: string; // ISO date string
+  expected_delivery_date: string; // ISO date string
+
+  file_path: string | null;
+
+  created_at: string; // ISO date string
+};
 
 const supplierData = [
   {
@@ -190,6 +189,15 @@ const stats = [
 ];
 
 export default function MarketScoping() {
+  const {
+    data: marketScopings = [],
+    isLoading,
+    isError,
+  } = useQuery<MarketScoping[]>({
+    queryKey: ["market-scopings"],
+    queryFn: fetchMarketScopings,
+  });
+
   return (
     <DashboardLayout
       breadcrumbs={[
@@ -242,10 +250,12 @@ export default function MarketScoping() {
                   </InputGroup>
                 </div>
                 <div className="flex flex-row gap-2">
-                  <Button variant="outline" className="shadow-none">
-                    <Upload className="w-2 h-2" />
-                    Upload MS Checklist
-                  </Button>
+                  <Link href="/market-scoping/upload-ms-template">
+                    <Button variant="outline" className="shadow-none">
+                      <Upload className="w-2 h-2" />
+                      Upload MS Template
+                    </Button>
+                  </Link>
                   <Button
                     className="text-white shadow-none"
                     onClick={() => {
@@ -264,18 +274,12 @@ export default function MarketScoping() {
               </div>
               <div className="pt-4">
                 {/* Table goes here */}
-                <div className="border rounded-md">
-                  <Table className="rounded-md">
+                <div className="border rounded-md w-full overflow-x-hidden ">
+                  <Table className="rounded-md table-auto w-full">
                     <TableHeader className="bg-neutral-100">
                       <TableRow>
                         <TableHead className="p-3 font-semibold text-neutral-500">
                           MS ID
-                        </TableHead>
-                        <TableHead className="p-3 font-semibold text-neutral-500">
-                          Project Name
-                        </TableHead>
-                        <TableHead className="p-3 font-semibold text-neutral-500">
-                          Estimated Budget
                         </TableHead>
                         <TableHead className="p-3 font-semibold text-neutral-500">
                           Name of Procuring Entity
@@ -284,37 +288,88 @@ export default function MarketScoping() {
                           End-User/Implementing Unit
                         </TableHead>
                         <TableHead className="p-3 font-semibold text-neutral-500">
+                          Name & <br />
+                          Designation of Representative
+                        </TableHead>
+                        <TableHead className="p-3 font-semibold text-neutral-500 w-10">
+                          Project Name
+                        </TableHead>
+                        <TableHead className="p-3 font-semibold text-neutral-500">
+                          Estimated Budget
+                        </TableHead>
+                        <TableHead className="p-3 font-semibold text-neutral-500">
                           Status
                         </TableHead>
                         <TableHead></TableHead>
                       </TableRow>
                     </TableHeader>
                     <TableBody>
-                      {marketScopingData.map((item) => (
-                        <TableRow key={item.id}>
-                          <TableCell className="font-medium p-3 text-blue-800">
-                            <Link href={`/market-scoping/${item.id}`}>
-                              {item.id}
+                      {isLoading && (
+                        <TableRow>
+                          <TableCell colSpan={7} className="text-center py-6">
+                            Loading market scopings...
+                          </TableCell>
+                        </TableRow>
+                      )}
+
+                      {!isLoading && marketScopings.length === 0 && (
+                        <TableRow>
+                          <TableCell colSpan={7} className="text-center py-6">
+                            No market scoping records found
+                          </TableCell>
+                        </TableRow>
+                      )}
+
+                      {marketScopings.map((item) => (
+                        <TableRow key={item.market_scoping_id}>
+                          <TableCell>
+                            <Link
+                              href={`/market-scoping/${item.market_scoping_id}`}
+                            >
+                              <CardTitle className="font-semibold text-[#134991] hover:underline cursor-pointer">
+                                {item.market_scoping_id}
+                              </CardTitle>
                             </Link>
                           </TableCell>
-                          <TableCell className="p-3">
-                            {item.projectName}
+
+                          <TableCell>
+                            <CardDescription>
+                              {item.procuring_entity}
+                            </CardDescription>
                           </TableCell>
-                          <TableCell className="p-3">{item.budget}</TableCell>
-                          <TableCell className="p-3">
-                            {item.procuringEntity}
+
+                          <TableCell>
+                            <CardDescription>{item.end_user}</CardDescription>
                           </TableCell>
-                          <TableCell className="p-3">{item.endUser}</TableCell>
-                          <TableCell className="p-3">
-                            <Badge
-                              variant="outline"
-                              className={`${item.statusColor} ${item.bgStatusColor} `}
-                            >
+
+                          <TableCell>
+                            <CardDescription>
+                              {item.rep_name}
+                              <br />
+                              {item.rep_designation}
+                            </CardDescription>
+                          </TableCell>
+
+                          <TableCell className="max-w-xs overflow-hidden whitespace-nowrap truncate ">
+                            <CardDescription>
+                              {item.project_name}
+                            </CardDescription>
+                          </TableCell>
+
+                          <TableCell className="text-right">
+                            <CardDescription>
+                              {item.estimated_budget}
+                            </CardDescription>
+                          </TableCell>
+
+                          <TableCell>
+                            <Badge variant="outline">
                               <CheckCircle2 className="w-2 h-2 mr-1" />
                               {item.status}
                             </Badge>
                           </TableCell>
-                          <TableCell className="text-right p-3">
+
+                          <TableCell className="text-right">
                             <DropdownMenu>
                               <DropdownMenuTrigger asChild>
                                 <Button variant="ghost" size="sm">
@@ -322,27 +377,22 @@ export default function MarketScoping() {
                                 </Button>
                               </DropdownMenuTrigger>
                               <DropdownMenuContent align="end">
-                                <DropdownMenuGroup>
-                                  <DropdownMenuItem asChild>
-                                    <Link
-                                      href={`/market-scoping/${item.id}`}
-                                      className="cursor-pointer"
-                                    >
-                                      <Eye className="w-4 h-4 mr-2" />
-                                      View Details
-                                    </Link>
-                                  </DropdownMenuItem>
-                                  <DropdownMenuItem>
-                                    <Pencil className="w-2 h-2 mr-2" />
-                                    Edit PPMP
-                                  </DropdownMenuItem>
-                                  <DropdownMenuItem className="text-red-500">
-                                    <Trash2 className="w-2 h-2 mr-2 text-red-500" />
-                                    <span className="text-red-500">
-                                      Delete PPMP
-                                    </span>
-                                  </DropdownMenuItem>
-                                </DropdownMenuGroup>
+                                <DropdownMenuItem asChild>
+                                  <Link
+                                    href={`/market-scoping/${item.market_scoping_id}`}
+                                  >
+                                    <Eye className="w-4 h-4 mr-2" />
+                                    View Details
+                                  </Link>
+                                </DropdownMenuItem>
+                                <DropdownMenuItem>
+                                  <Pencil className="w-4 h-4 mr-2" />
+                                  Edit
+                                </DropdownMenuItem>
+                                <DropdownMenuItem className="text-red-500">
+                                  <Trash2 className="w-4 h-4 mr-2" />
+                                  Delete
+                                </DropdownMenuItem>
                               </DropdownMenuContent>
                             </DropdownMenu>
                           </TableCell>
