@@ -379,15 +379,12 @@ export default function MarketScoping() {
                               <DropdownMenuContent align="end">
                                 <DropdownMenuItem asChild>
                                   <Link
-                                    href={`/market-scoping/${item.market_scoping_id}`}
+                                    href={`/market-scoping/update-ms-template/${item.market_scoping_id}`}
                                   >
-                                    <Eye className="w-4 h-4 mr-2" />
-                                    View Details
+                                    {" "}
+                                    <Pencil className="w-4 h-4 mr-2" />
+                                    Edit
                                   </Link>
-                                </DropdownMenuItem>
-                                <DropdownMenuItem>
-                                  <Pencil className="w-4 h-4 mr-2" />
-                                  Edit
                                 </DropdownMenuItem>
                                 <DropdownMenuItem className="text-red-500">
                                   <Trash2 className="w-4 h-4 mr-2" />

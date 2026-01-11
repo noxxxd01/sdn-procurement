@@ -42,8 +42,26 @@ type Procurement = {
   procurement_id: string;
 };
 
-export default function UploadMSTemplate() {
+// ---------------- Define the data type ----------------
+type MarketScopingData = {
+  market_scoping_id: string;
+  procurement_id: string;
+  status: string;
+  procuring_entity: string;
+  end_user: string;
+  rep_name: string;
+  rep_designation: string;
+  project_name: string;
+  estimated_budget: number;
+  market_scoping_from: string | null; // mm/yyyy
+  market_scoping_to: string | null; // mm/yyyy
+  expected_delivery_date: string | null; // mm/yyyy
+};
+
+export default function UpdateMSTemplate() {
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const [marketScopingId, setMarketScopingId] = useState<string>("");
 
   const {
     register,
@@ -178,8 +196,6 @@ export default function UploadMSTemplate() {
     "expectedDeliveryDate",
     "file",
   ]);
-
-  const [marketScopingId, setMarketScopingId] = useState("");
 
   React.useEffect(() => {
     const allFilled = watchedFields.every((field) => {

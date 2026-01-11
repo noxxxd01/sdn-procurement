@@ -17,12 +17,39 @@ export async function POST(req: Request) {
   const repDesignation = formData.get("repDesignation") as string;
   const projectName = formData.get("projectName") as string;
   const estimatedBudget = Number(formData.get("estimatedBudget"));
+
+  // Market Scoping Period
   const marketScopingPeriod = JSON.parse(
     formData.get("marketScopingPeriod") as string
   );
-  const expectedDeliveryDate = new Date(
-    formData.get("expectedDeliveryDate") as string
-  );
+  let marketScopingFrom: string | null = null;
+  let marketScopingTo: string | null = null;
+
+  if (marketScopingPeriod) {
+    if (marketScopingPeriod.from) {
+      const [fromMonth, fromYear] = marketScopingPeriod.from
+        .split("/")
+        .map(Number);
+      marketScopingFrom = `${fromYear}-${String(fromMonth).padStart(
+        2,
+        "0"
+      )}-01`; // YYYY-MM-DD
+    }
+    if (marketScopingPeriod.to) {
+      const [toMonth, toYear] = marketScopingPeriod.to.split("/").map(Number);
+      marketScopingTo = `${toYear}-${String(toMonth).padStart(2, "0")}-01`; // YYYY-MM-DD
+    }
+  }
+
+  // Expected Delivery Date
+  const expectedDeliveryStr = formData.get("expectedDeliveryDate") as string;
+  let expectedDeliveryDate: string | null = null;
+  if (expectedDeliveryStr) {
+    const [month, year] = expectedDeliveryStr.split("/").map(Number);
+    if (!isNaN(month) && !isNaN(year)) {
+      expectedDeliveryDate = `${year}-${String(month).padStart(2, "0")}-01`; // YYYY-MM-DD
+    }
+  }
 
   // Handle file
   const file = formData.get("file") as File | null;
@@ -36,45 +63,30 @@ export async function POST(req: Request) {
       );
     }
 
-    // Create uploads folder if not exists
     const uploadsDir = path.join(process.cwd(), "public", "uploads");
     if (!fs.existsSync(uploadsDir))
       fs.mkdirSync(uploadsDir, { recursive: true });
 
-    // Generate a unique filename
     const timestamp = Date.now();
     const filename = `${timestamp}-${file.name}`;
     const filepath = path.join(uploadsDir, filename);
 
-    // Convert file to buffer and save
     const arrayBuffer = await file.arrayBuffer();
     const buffer = Buffer.from(arrayBuffer);
     fs.writeFileSync(filepath, buffer);
 
-    filePath = `/uploads/${filename}`; // Path to store in DB
+    filePath = `/uploads/${filename}`;
   }
 
-  // Insert into database including file path
+  // Insert into DB
   await db.query(
     `INSERT INTO tbl_market_scoping
-   (
-     market_scoping_id,
-     procurement_id,
-     status,
-     procuring_entity,
-     end_user,
-     rep_name,
-     rep_designation,
-     project_name,
-     estimated_budget,
-     market_scoping_from,
-     market_scoping_to,
-     expected_delivery_date,
-     file_path
-   )
-   VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+     (market_scoping_id, procurement_id, status, procuring_entity, end_user,
+      rep_name, rep_designation, project_name, estimated_budget,
+      market_scoping_from, market_scoping_to, expected_delivery_date, file_path)
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
     [
-      marketScopingId, // ✅ NEW
+      marketScopingId,
       procurementId,
       status,
       procuringEntity,
@@ -83,10 +95,10 @@ export async function POST(req: Request) {
       repDesignation,
       projectName,
       estimatedBudget,
-      marketScopingPeriod.from,
-      marketScopingPeriod.to,
+      marketScopingFrom,
+      marketScopingTo,
       expectedDeliveryDate,
-      filePath, // ✅ THIS WAS MISSING
+      filePath,
     ]
   );
 
