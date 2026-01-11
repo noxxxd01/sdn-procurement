@@ -126,14 +126,20 @@ export default function CreateProcurementDialog() {
   const createMutation = useMutation({
     mutationFn: createProcurement,
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["procurements"] });
       toast.success("Procurement created");
+
+      // 🔄 refresh affected data
+      queryClient.invalidateQueries({ queryKey: ["procurements"] });
+      queryClient.invalidateQueries({ queryKey: ["project-funds"] });
+
       setOpen(false);
       reset();
       setSelectedProjectId(undefined);
       setSelectedSubProjectId(undefined);
     },
-    onError: (err: any) => toast.error(err.message),
+    onError: (err: any) => {
+      toast.error(err.message || "Failed to create procurement");
+    },
   });
 
   const onSubmit = (data: FormValues) => {

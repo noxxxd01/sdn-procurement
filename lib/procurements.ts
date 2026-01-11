@@ -15,6 +15,7 @@ export type Procurement = {
   id: number;
   procurement_id: string;
   project: string;
+  project_slug: string; // ✅ added
   sub_project: string;
   year: number;
   total_budget: number;
@@ -64,10 +65,13 @@ export async function deleteProcurement(id: number) {
 }
 
 // Get procurements by project slug
-export async function getProcurementsBySlug(slug: string) {
+export async function getProcurementsBySlug(
+  slug: string
+): Promise<Procurement[]> {
   const res = await fetch(`/api/procurements/by-project/${slug}`, {
     cache: "no-store",
   });
   if (!res.ok) throw new Error("Failed to fetch procurements");
-  return res.json();
+  const data = await res.json();
+  return data.rows ?? []; // always an array
 }

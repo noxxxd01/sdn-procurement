@@ -29,7 +29,7 @@ export default async function ProjectDetails({ params }: PageProps) {
   return (
     <DashboardLayout breadcrumbs={breadcrumbs}>
       <main>
-        <div className="flex flex-row justify-end gap-2">
+        <div className="flex flex-col sm:flex-row sm:justify-start 2xl:justify-end gap-2">
           <DeleteProjectButton slug={slug} />
           <AddFundButton slug={slug} />
         </div>

@@ -47,20 +47,20 @@ export async function GET(req: Request, { params }: RouteContext) {
       SELECT 
         p.id,
         p.procurement_id,
-        prj.name AS project,
-        s.name AS sub_project,
         p.year,
         p.total_budget,
         p.remaining_balance,
         p.status,
-        p.created_at
+        pr.name AS project,
+        pr.slug AS project_slug,
+        sp.name AS sub_project
       FROM tbl_procurements p
-      JOIN tbl_projects prj ON p.project_id = prj.id
-      LEFT JOIN tbl_sub_projects s ON p.sub_project_id = s.id
-      WHERE prj.id = ?
-      ORDER BY p.created_at DESC
+      JOIN tbl_projects pr ON p.project_id = pr.id
+      LEFT JOIN tbl_sub_projects sp ON p.sub_project_id = sp.id
+      WHERE LOWER(pr.slug) = LOWER(?)
+      ORDER BY p.created_at DESC;
       `,
-      [project.id]
+      [slug]
     );
 
     return NextResponse.json({

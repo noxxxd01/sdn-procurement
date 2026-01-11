@@ -1,3 +1,5 @@
+"use client";
+
 import { DashboardLayout } from "@/components/dashboard-layout";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -36,6 +38,7 @@ import {
   Building2,
   CheckCircle2,
   ClipboardList,
+  Download,
   Ellipsis,
   Eye,
   Filter,
@@ -195,13 +198,8 @@ export default function MarketScoping() {
       ]}
     >
       <div className="flex w-full flex-col gap-6">
-        <Tabs defaultValue="market-dashboard">
+        <Tabs defaultValue="market-scoped">
           <TabsList className="space-x-2">
-            <TabsTrigger value="market-dashboard">
-              <LayoutDashboard className="w-2 h-2" />
-              Dashboard
-            </TabsTrigger>
-
             <TabsTrigger value="market-scoped">
               <Search className="w-2 h-2" />
               Market Scoped
@@ -211,25 +209,23 @@ export default function MarketScoping() {
               <Building2 className="w-2 h-2" /> Supplier Directory
             </TabsTrigger>
           </TabsList>
-          <TabsContent value="market-dashboard">
-            <div className="grid grid-cols-4 gap-4 pt-4">
-              {stats.map((stat, index) => (
-                <Card className="shadow-none" key={index}>
-                  <CardHeader>
-                    <CardDescription>{stat.title}</CardDescription>
-                    <CardTitle className="text-3xl font-bold">
-                      {stat.value}
-                    </CardTitle>
-                    <CardAction className={stat.bg + " p-2 rounded-sm"}>
-                      <stat.icon className={stat.color + " w-4 h-4"} />
-                    </CardAction>
-                  </CardHeader>
-                </Card>
-              ))}
-            </div>
-          </TabsContent>
           <TabsContent value="market-scoped">
             <div className="pt-4 w-full">
+              <div className="grid grid-cols-4 gap-4 mb-4">
+                {stats.map((stat, index) => (
+                  <Card className="shadow-none" key={index}>
+                    <CardHeader>
+                      <CardDescription>{stat.title}</CardDescription>
+                      <CardTitle className="text-3xl font-bold">
+                        {stat.value}
+                      </CardTitle>
+                      <CardAction className={stat.bg + " p-2 rounded-sm"}>
+                        <stat.icon className={stat.color + " w-4 h-4"} />
+                      </CardAction>
+                    </CardHeader>
+                  </Card>
+                ))}
+              </div>
               <div className="flex flex-row justify-between items-center">
                 <div className="flex flex-row gap-2">
                   <Button variant="outline" className="shadow-none">
@@ -250,9 +246,19 @@ export default function MarketScoping() {
                     <Upload className="w-2 h-2" />
                     Upload MS Checklist
                   </Button>
-                  <Button className="text-white shadow-none">
-                    <Plus className="w-2 h-2" />
-                    Generate MS Checklist
+                  <Button
+                    className="text-white shadow-none"
+                    onClick={() => {
+                      const link = document.createElement("a");
+                      link.href = "/templates/MARKET SCOPING.docx"; // path relative to `public`
+                      link.download = "MARKET SCOPING.docx"; // optional: specify the download filename
+                      document.body.appendChild(link);
+                      link.click();
+                      document.body.removeChild(link);
+                    }}
+                  >
+                    <Download className="w-2 h-2" />
+                    Download MS Template
                   </Button>
                 </div>
               </div>

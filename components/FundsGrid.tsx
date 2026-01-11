@@ -22,18 +22,25 @@ import {
   EmptyContent,
   EmptyMedia,
 } from "@/components/ui/empty";
-import { Ellipsis, FolderIcon, Trash2 } from "lucide-react";
+import { Ellipsis, FolderIcon, Pencil, Trash2 } from "lucide-react";
 import { deleteFund, getFundsByProject } from "@/lib/funds";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
+  DropdownMenuGroup,
 } from "./ui/dropdown-menu";
-import { DropdownMenuGroup } from "@radix-ui/react-dropdown-menu";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { Skeleton } from "./ui/skeleton";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogTitle,
+  DialogTrigger,
+} from "./ui/dialog";
 
 type FundsGridProps = {
   slug: string;
@@ -59,14 +66,6 @@ export default function FundsGrid({ slug }: FundsGridProps) {
     queryKey: ["project-funds", slug],
     queryFn: () => getFundsByProject(slug),
   });
-
-  // Sum total budget for the project
-  const totalBudget = projectFunds.reduce(
-    (sum: number, fund: Fund) => sum + parseFloat((fund as any).budget || "0"),
-    0
-  );
-
-  console.log(`Total Budget for ${slug}: PHP ${totalBudget.toLocaleString()}`);
 
   // Delete fund mutation
   const deleteMutation = useMutation({
@@ -121,7 +120,7 @@ export default function FundsGrid({ slug }: FundsGridProps) {
     );
 
   return (
-    <div className="grid grid-cols-4 gap-4 mt-4">
+    <div className="grid grid-cols-1 sm:grid-cols-1 md:grid-cols-1 lg:grid-cols-3 xl:grid-cols-3 2xl:grid-cols-4 gap-4 mt-4">
       {projectFunds.map((fund: any) => (
         <Card
           key={fund.id}
@@ -145,6 +144,24 @@ export default function FundsGrid({ slug }: FundsGridProps) {
                 </DropdownMenuTrigger>
                 <DropdownMenuContent>
                   <DropdownMenuGroup>
+                    <DropdownMenuItem onSelect={(e) => e.preventDefault()}>
+                      <Dialog>
+                        <DialogTrigger asChild>
+                          <button className="p-0 flex flex-row items-center gap-2">
+                            <Pencil className="w-2 h-2 mr-1" />
+                            Edit Fund
+                          </button>
+                        </DialogTrigger>
+                        <DialogContent>
+                          <DialogTitle>Edit Fund</DialogTitle>
+                          <DialogDescription>
+                            Update the fund details for this project.
+                          </DialogDescription>
+
+                          {/* form goes here */}
+                        </DialogContent>
+                      </Dialog>
+                    </DropdownMenuItem>
                     <DropdownMenuItem onClick={() => handleDelete(fund.id)}>
                       <Trash2 className="w-2 h-2 mr-1 text-red-500" />{" "}
                       <span className="text-red-500">Delete Fund</span>

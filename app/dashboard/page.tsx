@@ -38,20 +38,13 @@ import { useForm } from "react-hook-form";
 import { Skeleton } from "@/components/ui/skeleton";
 import { toast } from "sonner";
 import { BreadcrumbFromPath } from "@/components/DynamicBreadcrumb";
+import { useProjectTotals } from "@/hooks/useSyncProjectFunds";
 
 // ------------------ React Hook Form type ------------------
 type ProjectFormValues = {
   title: string;
   amount?: number;
   progress?: number;
-};
-
-type Fund = {
-  id: number;
-  projectName: string;
-  amount: number;
-  year: number;
-  created_at: string;
 };
 
 export default function Page() {
@@ -91,6 +84,8 @@ export default function Page() {
     reset();
   };
 
+  const projectTotals = useProjectTotals(projects);
+
   return (
     <SidebarProvider>
       <AppSidebar />
@@ -104,7 +99,7 @@ export default function Page() {
           <BreadcrumbFromPath />
         </header>
 
-        <main className="grid grid-cols-1 sm:grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 p-4">
+        <main className="grid grid-cols-1 sm:grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-3 2xl:grid-cols-4 gap-4 p-4">
           {isLoading
             ? Array.from({ length: Math.min(4, projects.length || 4) }).map(
                 (_, i) => (
@@ -123,7 +118,7 @@ export default function Page() {
                     <CardHeader>
                       <CardDescription>{card.title}</CardDescription>
                       <CardTitle className="text-2xl mt-4 font-bold text-[#134991]">
-                        PHP {Number(card.amount).toLocaleString()}
+                        PHP {(projectTotals[card.slug] || 0).toLocaleString()}
                       </CardTitle>
                       <CardAction>
                         <Button

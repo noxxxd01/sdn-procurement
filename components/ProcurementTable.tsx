@@ -29,6 +29,7 @@ import {
 import { Label } from "./ui/label";
 import { Input } from "./ui/input";
 import { Skeleton } from "./ui/skeleton";
+import Link from "next/link";
 
 type Props = {
   slug: string;
@@ -42,13 +43,10 @@ export default function ProcurementTable({ slug }: Props) {
   const [selectedId, setSelectedId] = React.useState<number | null>(null);
   const [open, setOpen] = React.useState(false);
 
-  const { data, isLoading } = useQuery({
+  const { data: rows = [], isLoading } = useQuery({
     queryKey: ["procurements", slug],
     queryFn: () => getProcurementsBySlug(slug),
-    enabled: !!slug,
   });
-
-  const rows = data?.rows ?? [];
 
   const deleteMutation = useMutation({
     mutationFn: deleteProcurement,
@@ -72,8 +70,8 @@ export default function ProcurementTable({ slug }: Props) {
     );
 
   return (
-    <div className="border rounded-md mt-4">
-      <Table>
+    <div className="mt-4 overflow-x-auto border rounded-md ">
+      <Table className="min-w-full table-auto">
         <TableHeader className="bg-neutral-100">
           <TableRow>
             <TableHead>Procurement ID</TableHead>
@@ -88,12 +86,16 @@ export default function ProcurementTable({ slug }: Props) {
         </TableHeader>
 
         <TableBody>
-          {rows.map((p: any) => (
+          {rows.map((p) => (
             <TableRow key={p.id}>
               <TableCell>
-                <CardTitle className="font-semibold text-[#134991]">
-                  {p.procurement_id}
-                </CardTitle>
+                <Link
+                  href={`/dashboard/projects/${p.project_slug}/procurement/${p.procurement_id}`}
+                >
+                  <CardTitle className="font-semibold text-[#134991] hover:underline cursor-pointer">
+                    {p.procurement_id}
+                  </CardTitle>
+                </Link>
               </TableCell>
 
               <TableCell>
